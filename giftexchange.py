@@ -4,8 +4,15 @@ from os.path import exists
 import random
 import re
 
+
 def get_arguments():
+    """
+    Get arguments from the command line
+    :return:
+    """
     parser = argparse.ArgumentParser()
+
+    parser.add_argument('peeps', help="List of people and their spouses")
 
     parser.add_argument('--history_files',
         nargs='*',
@@ -32,29 +39,12 @@ def read_history(files):
     return history
 
 
-def get_history(person, history):
-    """ Get a list of people this person has drawn in previous years """
-    drawn = set()
-    for year in history:
-        drawee = year.get('Draws').get(person)
-        if drawee:
-            drawn.add(drawee)
-
-    return drawn
-
-
 def draw(peeps, couples, history):
     """ Draw the pairs, considering the history if provided """
 
     random.seed()
     draws = {} # Output set. Key is drawer, value is drawee
     drawn = set() # List of those already drawn this year.
-
-    couplemap = defaultdict(str)
-    for couple in couples:
-        a, b = couple
-        couplemap[a] = b
-        couplemap[b] = a
 
     for drawer in peeps:
         # List of available people.
@@ -63,9 +53,9 @@ def draw(peeps, couples, history):
         # Remove anyone in the history for this drawer
         available = [p for p in peeps
             if p != drawer
-            and p != couplemap[p]
+            and p != couples[p]
             and p not in drawn
-            and p not in get_history(drawer, history)]
+            and p not in history[drawer]]
 
         draw = random.choice(available)
         draws[drawer] = draw
@@ -73,31 +63,33 @@ def draw(peeps, couples, history):
     return draws
 
 
+def read_peeps(file):
+    peeps = []
+
+    couples = defaultdict(str)
+
+    with open(file, 'r') as fp:
+        for line in fp:
+            line = line.strip()
+            if m:= re.match(r'(\w+)\s+and\s+(\w+)', line):
+                a, b = m.group(1), m.group(2)
+                peeps.append(a)
+                peeps.append(b)
+                couples[a] = b
+                couples[b] = a
+            else:
+                peeps.append(line)
+
+    return peeps, couples
+
+
 def main():
     args = get_arguments()
     history = []
+
+    peeps, couples = read_peeps(args.peeps)
     if args.history_files:
-        history = get_history(args.history_files)
-    else:
-        # Just an example..
-        history = [
-            {
-                'Year': '2018',
-                'Draws': {
-                    'Ed': 'Dale',
-                    'Anne': 'Dave',
-                }
-            },
-            {
-                'Year': '2019',
-                'Draws': {
-                }
-            }
-        ]
-
-    peeps = ['Eddie', 'Beverly', 'Ed', 'Vicki', 'Dale', 'Adrianna', 'Dan', 'Deb', 'Dave', 'Michelle', 'Anne']
-    couples = [['Eddie', 'Beverly'], ['Ed', 'Vicki'], ['Dale', 'Adrianna'], ['Dan', 'Deb'], ['Dave', 'Michelle']]
-
+        history = read_history(args.history_files)
     result = draw(peeps, couples, history)
 
     for k in sorted(result.keys()):
