@@ -33,8 +33,7 @@ def read_history(files):
             with open(filename, 'r') as fp:
                 for line in fp:
                     line = line.strip()
-                    m = re.match("(\w+)\s*:\s*(\w+)", line)
-                    if m:
+                    if m := re.match(r"(\w+)\s*:\s*(\w+)", line):
                         history[m.group(1)].add(m.group(2))
     return history
 
@@ -64,6 +63,17 @@ def draw(peeps, couples, history):
 
 
 def read_peeps(file):
+    """
+    Read in the list of people.
+    Can be a single person, OR a couple
+    Couples are defined as:
+        Name and Name
+
+    Sinles are just
+        Name
+    :param file:
+    :return:
+    """
     peeps = []
 
     couples = defaultdict(str)
