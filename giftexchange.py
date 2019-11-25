@@ -3,6 +3,7 @@ from collections import defaultdict
 from os.path import exists
 import random
 import re
+import sys
 
 
 def get_arguments():
@@ -18,6 +19,8 @@ def get_arguments():
         nargs='*',
         help="Input file with previous years draws")
 
+    parser.add_argument('--output_file', '-o', help="Specify the output file to write to")
+
     return parser.parse_args()
 
 
@@ -26,6 +29,7 @@ def read_history(files):
     Accepts a list of files
     For each file, read in the name:name pairs, and add to the history
     """
+    print(sys.stderr, f"History files are {files}")
 
     history = defaultdict(set)
     for filename in files:
@@ -41,33 +45,39 @@ def read_history(files):
 def draw(peeps, couples, history):
     """ Draw the pairs, considering the history if provided """
 
-    retries = 3
+    random.seed()
+    draws = {} # Output set. Key is drawer, value is drawee
+    drawn = set() # List of those already drawn this year.
+
+    for drawer in peeps:
+        # List of available people.
+        # Remove the drawer
+        # Remove anyone already drawn
+        # Remove anyone in the history for this drawer
+        available = [p for p in peeps
+            if p != drawer
+            and p != couples[drawer]
+            and p not in drawn
+            and p not in history[drawer]]
+
+        draw = random.choice(available)
+        draws[drawer] = draw
+        drawn.add(draw)
+
+    return draws
+
+
+def draw_with_retries(peeps, couples, history, retries=3):
+
     while retries:
+        try:
+            draws = draw(peeps, couples, history)
+            return draws
+        except IndexError as e:
+            retries -= 1
+            print(f"Failed iteration. Will try again {retries} times")
 
-        random.seed()
-        draws = {} # Output set. Key is drawer, value is drawee
-        drawn = set() # List of those already drawn this year.
-
-        for drawer in peeps:
-            # List of available people.
-            # Remove the drawer
-            # Remove anyone already drawn
-            # Remove anyone in the history for this drawer
-            available = [p for p in peeps
-                if p != drawer
-                and p != couples[drawer]
-                and p not in drawn
-                and p not in history[drawer]]
-
-            if not available:
-                print("Out of choices.. will try again")
-                retries -= 1
-                continue
-
-            draw = random.choice(available)
-            draws[drawer] = draw
-            drawn.add(draw)
-        return draws
+    return None
 
 
 def read_peeps(file):
@@ -108,11 +118,21 @@ def main():
     peeps, couples = read_peeps(args.peeps)
     if args.history_files:
         history = read_history(args.history_files)
-    result = draw(peeps, couples, history)
+    result = draw_with_retries(peeps, couples, history, retries=10)
 
-    for k in sorted(result.keys()):
-        v = result[k]
-        print(f"{k}: {v}")
+    if result:
+        for k in sorted(result.keys()):
+            v = result[k]
+            print(f"{k}: {v}")
+
+        if args.output_file:
+            with open(args.output_file, 'w') as fp:
+                for k in sorted(result.keys()):
+                    v = result[k]
+                    fp.write(f"{k}: {v}\n")
+
+    else:
+        print("Sorry, could not generate a sequence. Too much history??")
 
 
 if __name__ == "__main__":
