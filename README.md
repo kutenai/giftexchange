@@ -38,6 +38,12 @@ Note that if you are too restrictive, you won't be able to easily find a set of 
 Run the program like this
 
     python giftexchange.py peeps.txt --history file1 [file2]
+
+Example
+
+    python giftexchange.py peeps.txt --history 2017_draw.txt 2018_draw.txt | tee 2019_draw.txt
+
+
     
     
     

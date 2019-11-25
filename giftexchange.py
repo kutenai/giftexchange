@@ -41,25 +41,33 @@ def read_history(files):
 def draw(peeps, couples, history):
     """ Draw the pairs, considering the history if provided """
 
-    random.seed()
-    draws = {} # Output set. Key is drawer, value is drawee
-    drawn = set() # List of those already drawn this year.
+    retries = 3
+    while retries:
 
-    for drawer in peeps:
-        # List of available people.
-        # Remove the drawer
-        # Remove anyone already drawn
-        # Remove anyone in the history for this drawer
-        available = [p for p in peeps
-            if p != drawer
-            and p != couples[p]
-            and p not in drawn
-            and p not in history[drawer]]
+        random.seed()
+        draws = {} # Output set. Key is drawer, value is drawee
+        drawn = set() # List of those already drawn this year.
 
-        draw = random.choice(available)
-        draws[drawer] = draw
-        drawn.add(draw)
-    return draws
+        for drawer in peeps:
+            # List of available people.
+            # Remove the drawer
+            # Remove anyone already drawn
+            # Remove anyone in the history for this drawer
+            available = [p for p in peeps
+                if p != drawer
+                and p != couples[drawer]
+                and p not in drawn
+                and p not in history[drawer]]
+
+            if not available:
+                print("Out of choices.. will try again")
+                retries -= 1
+                continue
+
+            draw = random.choice(available)
+            draws[drawer] = draw
+            drawn.add(draw)
+        return draws
 
 
 def read_peeps(file):
