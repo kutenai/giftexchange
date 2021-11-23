@@ -1,0 +1,9 @@
+<_io.TextIOWrapper name='<stderr>' mode='w' encoding='utf-8'> History files are ['2017_draw.txt', '2018_draw.txt', '2019_draw.txt', '2020_draw.txt']
+Adrianna: Dan
+Anne: Deb
+Dale: Ed
+Dan: Dave
+Dave: Dale
+Deb: Vicki
+Ed: Adrianna
+Vicki: Anne
