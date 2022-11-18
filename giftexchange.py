@@ -4,6 +4,7 @@ from os.path import exists
 import random
 import re
 import sys
+import json
 
 
 def get_arguments():
@@ -31,14 +32,14 @@ def read_history(files):
     """
     print(sys.stderr, f"History files are {files}")
 
-    history = defaultdict(set)
+    history = defaultdict(list)
     for filename in files:
         if exists(filename):
             with open(filename, 'r') as fp:
                 for line in fp:
                     line = line.strip()
                     if m := re.match(r"(\w+)\s*:\s*(\w+)", line):
-                        history[m.group(1)].add(m.group(2))
+                        history[m.group(1)].append(m.group(2))
     return history
 
 
@@ -46,8 +47,8 @@ def draw(peeps, couples, history):
     """ Draw the pairs, considering the history if provided """
 
     random.seed()
-    draws = {} # Output set. Key is drawer, value is drawee
-    drawn = set() # List of those already drawn this year.
+    draws = {}  # Output set. Key is drawer, value is drawee
+    drawn = set()  # List of those already drawn this year.
 
     for drawer in peeps:
         # List of available people.
@@ -119,6 +120,8 @@ def main():
     if args.history_files:
         history = read_history(args.history_files)
     result = draw_with_retries(peeps, couples, history, retries=10)
+
+    jhist = json.dumps(dict(history))
 
     if result:
         for k in sorted(result.keys()):
